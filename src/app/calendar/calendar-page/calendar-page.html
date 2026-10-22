@@ -43,10 +43,10 @@
 </p-toolbar>
 
 @if (store.yearsState().status === 'error') {
-  <p class="error">Список лет не прогрузился</p>
+  <p class="error">{{ texts.yearsLoadError }}</p>
 }
 @if (store.yearState().status === 'error') {
-  <p class="error">Не удалось загрузить записи за {{ store.year() }} год</p>
+  <p class="error">{{ texts.entriesLoadError(store.year()!) }}</p>
 }
 
 <main class="content">

@@ -17,6 +17,7 @@ import { filter, switchMap, take } from 'rxjs';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 
+import { CALENDAR_TEXTS } from '../calendar-constants';
 import { formatDate, parseIsoDate } from '../calendar-date-utils';
 import { CalendarEntry, DAY_TYPE_LABELS } from '../calendar-models';
 import { CalendarStore } from '../calendar-store';
@@ -47,6 +48,7 @@ export class CalendarPage {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
   protected readonly store = inject(CalendarStore);
+  protected readonly texts = CALENDAR_TEXTS;
 
   private readonly calendarScroll = viewChild.required<ElementRef<HTMLElement>>('calendarScroll');
 
@@ -58,11 +60,11 @@ export class CalendarPage {
   }
 
   openCreateDialog(date?: string): void {
-    this.openEntryDialog('Добавить запись', { defaultDate: date });
+    this.openEntryDialog(CALENDAR_TEXTS.createTitle, { defaultDate: date });
   }
 
   openEditDialog(entry: CalendarEntry): void {
-    this.openEntryDialog('Изменить запись', { entry });
+    this.openEntryDialog(CALENDAR_TEXTS.editTitle, { entry });
   }
 
   openDialogForDate(date: string): void {
@@ -83,17 +85,17 @@ export class CalendarPage {
 
     const date = parseIsoDate(entry.date);
     this.confirmationService.confirm({
-      header: 'Удалить запись',
-      message: `Удалить запись ${formatDate(date)} («${DAY_TYPE_LABELS[entry.type]}»)?`,
+      header: CALENDAR_TEXTS.removeTitle,
+      message: CALENDAR_TEXTS.removeConfirm(formatDate(date), DAY_TYPE_LABELS[entry.type]),
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Удалить',
-      rejectLabel: 'Отмена',
+      acceptLabel: CALENDAR_TEXTS.removeAccept,
+      rejectLabel: CALENDAR_TEXTS.cancel,
       acceptButtonProps: { severity: 'danger' },
       rejectButtonProps: { severity: 'secondary', text: true },
       accept: () =>
         this.store
           .remove(entry.date)
-          .subscribe({ error: () => this.showError('Не удалось удалить запись') }),
+          .subscribe({ error: () => this.showError(CALENDAR_TEXTS.removeError) }),
       dismissableMask: true,
     });
   }
@@ -123,10 +125,10 @@ export class CalendarPage {
         filter(Boolean),
         switchMap((result) => this.store.save(result)),
       )
-      .subscribe({ error: () => this.showError('Не удалось сохранить запись') });
+      .subscribe({ error: () => this.showError(CALENDAR_TEXTS.saveError) });
   }
 
   private showError(detail: string): void {
-    this.messageService.add({ severity: 'error', summary: 'Ошибка', detail });
+    this.messageService.add({ severity: 'error', summary: CALENDAR_TEXTS.errorSummary, detail });
   }
 }

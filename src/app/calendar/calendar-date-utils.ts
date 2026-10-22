@@ -1,8 +1,9 @@
+import { LOCALE } from '../shared/constants/date-constants';
+import { STANDARD_WEEKEND_DAYS } from './calendar-constants';
 import { DayType } from './calendar-models';
 
 export function standardDayType(date: Date): DayType {
-  const weekDay = date.getDay();
-  return weekDay === 0 || weekDay === 6 ? DayType.NonWorking : DayType.Working;
+  return STANDARD_WEEKEND_DAYS.includes(date.getDay()) ? DayType.NonWorking : DayType.Working;
 }
 
 export function parseIsoDate(date: string): Date {
@@ -19,4 +20,4 @@ export function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-export const formatDate = (date: Date, locale = 'ru-RU') => date.toLocaleDateString(locale);
+export const formatDate = (date: Date, locale = LOCALE) => date.toLocaleDateString(locale);

@@ -20,7 +20,7 @@
 
   <ng-template #body let-entry>
     <tr [pSelectableRow]="entry" (dblclick)="rowDblClick.emit(entry)">
-      <td>{{ entry.date | date: 'dd.MM.yyyy' }}</td>
+      <td>{{ entry.date | date: dateFormat }}</td>
       <td>{{ entry.type | dayTypeLabel }}</td>
     </tr>
   </ng-template>

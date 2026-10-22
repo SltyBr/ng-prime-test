@@ -14,7 +14,8 @@ import { DatePickerDateMeta, DatePickerModule } from 'primeng/datepicker';
 import { parseIsoDate, toIsoDate } from '../calendar-date-utils';
 import { CalendarEntry } from '../calendar-models';
 import { DayClassesPipe } from '../pipes/day-classes-pipe';
-import { MONTH_NAMES } from '../../shared/constants/date-constants';
+import { LOCALE, MONTH_NAMES } from '../../shared/constants/date-constants';
+import { CALENDAR_TEXTS } from '../calendar-constants';
 
 interface MonthView {
   name: string;
@@ -23,7 +24,7 @@ interface MonthView {
   isCurrent: boolean;
 }
 
-const TODAY_FORMAT = new Intl.DateTimeFormat('ru-RU', {
+const TODAY_FORMAT = new Intl.DateTimeFormat(LOCALE, {
   day: 'numeric',
   month: 'long',
   year: 'numeric',
@@ -46,7 +47,7 @@ export class YearCalendar {
   private readonly monthElements = viewChildren<ElementRef<HTMLElement>>('monthElement');
 
   private readonly today = new Date();
-  protected readonly todayLabel = `Сегодня ${TODAY_FORMAT.format(this.today)}`;
+  protected readonly todayLabel = CALENDAR_TEXTS.today(TODAY_FORMAT.format(this.today));
 
   protected readonly months = computed<MonthView[]>(() =>
     MONTH_NAMES.map((name, month) => ({

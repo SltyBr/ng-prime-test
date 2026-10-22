@@ -16,6 +16,7 @@ import { IftaLabelModule } from 'primeng/iftalabel';
 import { SelectModule } from 'primeng/select';
 
 import { formatDate, parseIsoDate, toIsoDate } from '../calendar-date-utils';
+import { CALENDAR_TEXTS } from '../calendar-constants';
 import { CalendarEntry, DAY_TYPE_LABELS, DayType } from '../calendar-models';
 
 @Component({
@@ -75,19 +76,16 @@ export class EntryForm {
       return;
     }
 
-    const typeChangeMessage =
-      existing.type !== type ? ` Изменить тип на «${DAY_TYPE_LABELS[type]}»?` : '';
-    const message = `
-      На ${formatDate(date)} уже есть запись: «${DAY_TYPE_LABELS[existing.type]}».
-      ${typeChangeMessage}
-    `;
-
     this.confirmationService.confirm({
-      header: 'Запись уже существует',
-      message,
+      header: CALENDAR_TEXTS.duplicateTitle,
+      message: CALENDAR_TEXTS.duplicateConfirm(
+        formatDate(date),
+        DAY_TYPE_LABELS[existing.type],
+        existing.type !== type ? DAY_TYPE_LABELS[type] : null,
+      ),
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Редактировать',
-      rejectLabel: 'Отмена',
+      acceptLabel: CALENDAR_TEXTS.duplicateAccept,
+      rejectLabel: CALENDAR_TEXTS.cancel,
       rejectButtonProps: { severity: 'secondary', text: true },
       accept: () => this.ref.close(result),
     });
