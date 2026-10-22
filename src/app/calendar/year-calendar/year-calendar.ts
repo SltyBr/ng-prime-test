@@ -14,6 +14,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { parseIsoDate, toIsoDate } from '../calendar-date-utils';
 import { CalendarEntry } from '../calendar-models';
 import { DayClassesPipe } from '../pipes/day-classes-pipe';
+import { MONTH_NAMES } from '../../shared/constants/date-constants';
 
 interface MonthView {
   name: string;
@@ -27,21 +28,6 @@ const TODAY_FORMAT = new Intl.DateTimeFormat('ru-RU', {
   month: 'long',
   year: 'numeric',
 });
-
-const MONTH_NAMES = [
-  'Январь',
-  'Февраль',
-  'Март',
-  'Апрель',
-  'Май',
-  'Июнь',
-  'Июль',
-  'Август',
-  'Сентябрь',
-  'Октябрь',
-  'Ноябрь',
-  'Декабрь',
-];
 
 @Component({
   selector: 'app-year-calendar',

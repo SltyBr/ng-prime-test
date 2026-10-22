@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -8,7 +15,7 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { IftaLabelModule } from 'primeng/iftalabel';
 import { SelectModule } from 'primeng/select';
 
-import { parseIsoDate, toIsoDate } from '../calendar-date-utils';
+import { formatDate, parseIsoDate, toIsoDate } from '../calendar-date-utils';
 import { CalendarEntry, DAY_TYPE_LABELS, DayType } from '../calendar-models';
 
 @Component({
@@ -47,7 +54,9 @@ export class EntryForm {
     const entry = this.entry();
     return entry ? parseIsoDate(entry.date) : null;
   });
-  protected readonly type = linkedSignal<DayType | null>(() => this.entry()?.type ?? DayType.Working);
+  protected readonly type = linkedSignal<DayType | null>(
+    () => this.entry()?.type ?? DayType.Working,
+  );
   protected readonly isValid = computed(() => this.date() !== null && this.type() !== null);
 
   protected submit(): void {
@@ -58,20 +67,23 @@ export class EntryForm {
     }
 
     const result: CalendarEntry = { date: toIsoDate(date), type };
-    const existing = this.isEdit()
-      ? undefined
-      : this.entries().find((entry) => entry.date === result.date);
+    const existing = !this.isEdit() && this.entries().find((entry) => entry.date === result.date);
 
     if (!existing) {
       this.ref.close(result);
       return;
     }
 
+    const sameTypeMessage =
+      existing.type !== type ? ` Изменить тип на «${DAY_TYPE_LABELS[type]}»?` : '';
+    const message = `
+      На ${formatDate(date)} уже есть запись: «${DAY_TYPE_LABELS[existing.type]}».
+      ${sameTypeMessage}
+    `;
+
     this.confirmationService.confirm({
       header: 'Запись уже существует',
-      message:
-        `На ${date.toLocaleDateString('ru-RU')} уже есть запись: «${DAY_TYPE_LABELS[existing.type]}». ` +
-        `Изменить тип на «${DAY_TYPE_LABELS[type]}»?`,
+      message,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Редактировать',
       rejectLabel: 'Отмена',

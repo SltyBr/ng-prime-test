@@ -3,17 +3,19 @@ import {
   Component,
   ElementRef,
   afterRenderEffect,
+  effect,
   inject,
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectModule } from 'primeng/select';
 import { filter, switchMap, take } from 'rxjs';
+import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 
 import { parseIsoDate } from '../calendar-date-utils';
@@ -31,11 +33,12 @@ import { YearCalendar } from '../year-calendar/year-calendar';
     ConfirmDialogModule,
     ProgressSpinnerModule,
     SelectModule,
+    ToastModule,
     ToolbarModule,
     EntriesTable,
     YearCalendar,
   ],
-  providers: [CalendarStore, DialogService, ConfirmationService],
+  providers: [CalendarStore, DialogService, ConfirmationService, MessageService],
   templateUrl: './calendar-page.html',
   styleUrl: './calendar-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +46,7 @@ import { YearCalendar } from '../year-calendar/year-calendar';
 export class CalendarPage {
   private readonly dialogService = inject(DialogService);
   private readonly confirmationService = inject(ConfirmationService);
+  private readonly messageService = inject(MessageService);
   protected readonly store = inject(CalendarStore);
 
   private readonly calendarScroll = viewChild.required<ElementRef<HTMLElement>>('calendarScroll');
@@ -51,6 +55,13 @@ export class CalendarPage {
     afterRenderEffect(() => {
       this.store.year();
       this.calendarScroll().nativeElement.scrollTo({ top: 0 });
+    });
+
+    effect(() => {
+      const error = this.store.actionError();
+      if (error) {
+        this.messageService.add({ severity: 'error', summary: 'Ошибка', detail: error });
+      }
     });
   }
 
@@ -71,7 +82,7 @@ export class CalendarPage {
       })
       ?.onClose.pipe(
         take(1),
-        filter((result?: CalendarEntry): result is CalendarEntry => !!result),
+        filter(Boolean),
         switchMap((result) => this.store.save(result)),
       )
       .subscribe();

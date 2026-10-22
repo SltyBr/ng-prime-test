@@ -1,4 +1,4 @@
-@for (month of months(); track month.firstDay.getTime(); let index = $index) {
+@for (month of months(); track $index) {
   <section #monthElement class="month">
     <header class="month__header">
       <h3 class="month__title">{{ month.name }}</h3>
@@ -14,7 +14,7 @@
       [defaultDate]="month.firstDay"
       [minDate]="month.firstDay"
       [maxDate]="month.lastDay"
-      [ngModel]="selectedMonth() === index ? selectedDay() : null"
+      [ngModel]="selectedMonth() === $index ? selectedDay() : null"
       (ngModelChange)="onSelect($event)"
     >
       <ng-template #date let-meta let-selected="selected">

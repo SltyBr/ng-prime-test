@@ -1,6 +1,13 @@
 <p-toolbar class="toolbar">
   <ng-template #start>
-    <button pButton type="button" severity="secondary" text size="small" (click)="openEntryDialog()">
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      text
+      size="small"
+      (click)="openEntryDialog()"
+    >
       <img src="icons/plus.svg" alt="" />
       Добавить
     </button>
@@ -27,13 +34,17 @@
         [ngModel]="store.year()"
         (ngModelChange)="store.selectYear($event)"
         [loading]="store.isYearsLoading()"
+        [disabled]="!store.years().length"
         size="small"
       />
     </label>
   </ng-template>
 </p-toolbar>
 
-@if (store.error(); as error) {
+@if (store.yearsError(); as error) {
+  <p class="error">{{ error }}</p>
+}
+@if (store.entriesError(); as error) {
   <p class="error">{{ error }}</p>
 }
 
@@ -68,3 +79,4 @@
 </main>
 
 <p-confirmdialog />
+<p-toast />
