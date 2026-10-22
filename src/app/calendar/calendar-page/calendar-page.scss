@@ -16,6 +16,13 @@
   color: var(--p-text-muted-color);
 }
 
+.error {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  color: var(--p-red-600);
+  background: var(--p-red-50);
+}
+
 .content {
   display: grid;
   grid-template-columns: minmax(320px, 1fr) minmax(0, 1fr);

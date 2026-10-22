@@ -6,8 +6,8 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { IftaLabelModule } from 'primeng/iftalabel';
 import { SelectModule } from 'primeng/select';
 
-import { parseIsoDate, toIsoDate } from '../calendar-date.utils';
-import { CalendarEntry, DAY_TYPE_LABELS, DayType } from '../calendar.models';
+import { parseIsoDate, toIsoDate } from '../calendar-date-utils';
+import { CalendarEntry, DAY_TYPE_LABELS, DayType } from '../calendar-models';
 
 @Component({
   selector: 'app-entry-form',

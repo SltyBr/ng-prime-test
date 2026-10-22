@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, delay, map } from 'rxjs';
 
-import { CalendarEntry, CalendarYearDto } from './calendar.models';
+import { CalendarEntry, CalendarYearDto } from './calendar-models';
 
 const MOCK_DATA_URL = 'mock-data';
 const MOCK_DELAY_MS = 400;

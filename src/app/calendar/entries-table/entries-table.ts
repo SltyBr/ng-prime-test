@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
 import { TableModule } from 'primeng/table';
 
-import { CalendarEntry, DAY_TYPE_LABELS } from '../calendar.models';
+import { CalendarEntry, DAY_TYPE_LABELS } from '../calendar-models';
 
 @Component({
   selector: 'app-entries-table',
@@ -13,6 +13,7 @@ import { CalendarEntry, DAY_TYPE_LABELS } from '../calendar.models';
 })
 export class EntriesTable {
   readonly entries = input.required<CalendarEntry[]>();
+  readonly loading = input(false);
   readonly selected = model<CalendarEntry | null>(null);
   readonly rowDblClick = output<CalendarEntry>();
 

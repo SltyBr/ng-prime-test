@@ -4,7 +4,14 @@
       <img src="icons/plus.svg" alt="" />
       Добавить
     </button>
-    <button pButton type="button" severity="danger" text size="small" [disabled]="!selected()">
+    <button
+      pButton
+      type="button"
+      severity="danger"
+      text
+      size="small"
+      [disabled]="!store.selectedEntry()"
+    >
       <img src="icons/delete.svg" alt="" />
       Удалить
     </button>
@@ -15,24 +22,32 @@
       Год:
       <p-select
         inputId="year"
-        [options]="years"
-        [ngModel]="year()"
-        (ngModelChange)="year.set($event)"
+        [options]="store.years()"
+        [ngModel]="store.year()"
+        (ngModelChange)="store.selectYear($event)"
         size="small"
       />
     </label>
   </ng-template>
 </p-toolbar>
 
+@if (store.error(); as error) {
+  <p class="error">{{ error }}</p>
+}
+
 <main class="content">
   <app-entries-table
     class="content__table"
-    [entries]="entries()"
-    [(selected)]="selected"
+    [entries]="store.entries()"
+    [loading]="store.isLoading()"
+    [selected]="store.selectedEntry()"
+    (selectedChange)="store.selectDate($event?.date ?? null)"
     (rowDblClick)="openEntryDialog($event)"
   />
 
   <div class="content__calendar">
-    <app-year-calendar [year]="year()" [entries]="entries()" />
+    @if (store.year(); as year) {
+      <app-year-calendar [year]="year" [entries]="store.entries()" />
+    }
   </div>
 </main>

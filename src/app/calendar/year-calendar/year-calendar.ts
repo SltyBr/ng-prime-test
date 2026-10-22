@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { DatePickerDateMeta, DatePickerModule } from 'primeng/datepicker';
 
-import { toIsoDate } from '../calendar-date.utils';
-import { CalendarEntry, DayType } from '../calendar.models';
+import { toIsoDate } from '../calendar-date-utils';
+import { CalendarEntry, DayType } from '../calendar-models';
 
 interface MonthView {
   name: string;
