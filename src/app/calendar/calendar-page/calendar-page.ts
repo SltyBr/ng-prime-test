@@ -3,7 +3,6 @@ import {
   Component,
   ElementRef,
   afterRenderEffect,
-  effect,
   inject,
   viewChild,
 } from '@angular/core';
@@ -18,7 +17,7 @@ import { filter, switchMap, take } from 'rxjs';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 
-import { parseIsoDate } from '../calendar-date-utils';
+import { formatDate, parseIsoDate } from '../calendar-date-utils';
 import { CalendarEntry, DAY_TYPE_LABELS } from '../calendar-models';
 import { CalendarStore } from '../calendar-store';
 import { EntriesTable } from '../entries-table/entries-table';
@@ -56,36 +55,24 @@ export class CalendarPage {
       this.store.year();
       this.calendarScroll().nativeElement.scrollTo({ top: 0 });
     });
-
-    effect(() => {
-      const error = this.store.actionError();
-      if (error) {
-        this.messageService.add({ severity: 'error', summary: 'Ошибка', detail: error });
-      }
-    });
   }
 
-  openEntryDialog(entry?: CalendarEntry): void {
-    const year = this.store.year();
-    if (year === null) {
-      return;
-    }
+  openCreateDialog(date?: string): void {
+    this.openEntryDialog('Добавить запись', { defaultDate: date });
+  }
 
-    this.dialogService
-      .open(EntryForm, {
-        header: entry ? 'Изменить запись' : 'Добавить запись',
-        modal: true,
-        closable: true,
-        width: '26rem',
-        inputValues: { entry, year, entries: this.store.entries() },
-        dismissableMask: true,
-      })
-      ?.onClose.pipe(
-        take(1),
-        filter(Boolean),
-        switchMap((result) => this.store.save(result)),
-      )
-      .subscribe();
+  openEditDialog(entry: CalendarEntry): void {
+    this.openEntryDialog('Изменить запись', { entry });
+  }
+
+  openDialogForDate(date: string): void {
+    const entry = this.store.entries().find((item) => item.date === date);
+
+    if (entry) {
+      this.openEditDialog(entry);
+    } else {
+      this.openCreateDialog(date);
+    }
   }
 
   removeSelected(): void {
@@ -97,14 +84,49 @@ export class CalendarPage {
     const date = parseIsoDate(entry.date);
     this.confirmationService.confirm({
       header: 'Удалить запись',
-      message: `Удалить запись ${date.toLocaleDateString('ru-RU')} («${DAY_TYPE_LABELS[entry.type]}»)? `,
+      message: `Удалить запись ${formatDate(date)} («${DAY_TYPE_LABELS[entry.type]}»)?`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Удалить',
       rejectLabel: 'Отмена',
       acceptButtonProps: { severity: 'danger' },
       rejectButtonProps: { severity: 'secondary', text: true },
-      accept: () => this.store.remove(entry.date).subscribe(),
+      accept: () =>
+        this.store
+          .remove(entry.date)
+          .subscribe({ error: () => this.showError('Не удалось удалить запись') }),
       dismissableMask: true,
     });
+  }
+
+  private openEntryDialog(
+    header: string,
+    inputs: { entry?: CalendarEntry; defaultDate?: string },
+  ): void {
+    const year = this.store.year();
+
+    if (year === null) {
+      return;
+    }
+
+    this.dialogService
+      .open(EntryForm, {
+        header,
+        modal: true,
+        closable: true,
+        width: '26rem',
+        inputValues: { ...inputs, year, entries: this.store.entries() },
+        dismissableMask: true,
+        focusOnShow: false,
+      })
+      ?.onClose.pipe(
+        take(1),
+        filter(Boolean),
+        switchMap((result) => this.store.save(result)),
+      )
+      .subscribe({ error: () => this.showError('Не удалось сохранить запись') });
+  }
+
+  private showError(detail: string): void {
+    this.messageService.add({ severity: 'error', summary: 'Ошибка', detail });
   }
 }

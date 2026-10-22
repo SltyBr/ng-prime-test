@@ -6,7 +6,8 @@
       severity="secondary"
       text
       size="small"
-      (click)="openEntryDialog()"
+      [disabled]="store.yearState().status !== 'loaded'"
+      (click)="openCreateDialog()"
     >
       <img src="icons/plus.svg" alt="" />
       Добавить
@@ -33,7 +34,7 @@
         [options]="store.years()"
         [ngModel]="store.year()"
         (ngModelChange)="store.selectYear($event)"
-        [loading]="store.isYearsLoading()"
+        [loading]="store.yearsState().status === 'loading'"
         [disabled]="!store.years().length"
         size="small"
       />
@@ -41,21 +42,21 @@
   </ng-template>
 </p-toolbar>
 
-@if (store.yearsError(); as error) {
-  <p class="error">{{ error }}</p>
+@if (store.yearsState().status === 'error') {
+  <p class="error">Список лет не прогрузился</p>
 }
-@if (store.entriesError(); as error) {
-  <p class="error">{{ error }}</p>
+@if (store.yearState().status === 'error') {
+  <p class="error">Не удалось загрузить записи за {{ store.year() }} год</p>
 }
 
 <main class="content">
   <app-entries-table
     class="content__table"
     [entries]="store.entries()"
-    [loading]="store.isLoading()"
+    [loading]="store.yearState().status === 'loading'"
     [selected]="store.selectedEntry()"
     (selectedChange)="store.selectDate($event?.date ?? null)"
-    (rowDblClick)="openEntryDialog($event)"
+    (rowDblClick)="openEditDialog($event)"
   />
 
   <div class="content__calendar">
@@ -66,11 +67,12 @@
           [entries]="store.entries()"
           [selectedDate]="store.selectedDate()"
           (dateSelect)="store.selectDate($event)"
+          (dateDblClick)="openDialogForDate($event)"
         />
       }
     </div>
 
-    @if (store.isLoading()) {
+    @if (store.yearState().status === 'loading') {
       <div class="content__loader">
         <p-progress-spinner strokeWidth="4" ariaLabel="Загрузка календаря" />
       </div>

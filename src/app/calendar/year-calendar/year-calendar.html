@@ -18,7 +18,12 @@
       (ngModelChange)="onSelect($event)"
     >
       <ng-template #date let-meta let-selected="selected">
-        <span [class]="meta | dayClasses: typeByDate() : selected">{{ meta.day }}</span>
+        <span
+          [class]="meta | dayClasses: typeByDate() : selected"
+          (dblclick)="onDateDblClick(meta)"
+        >
+          {{ meta.day }}
+        </span>
       </ng-template>
     </p-datepicker>
   </section>

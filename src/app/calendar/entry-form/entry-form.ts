@@ -38,6 +38,7 @@ export class EntryForm {
   private readonly confirmationService = inject(ConfirmationService);
 
   readonly entry = input<CalendarEntry>();
+  readonly defaultDate = input<string>();
   readonly year = input.required<number>();
   readonly entries = input<CalendarEntry[]>([]);
 
@@ -51,8 +52,8 @@ export class EntryForm {
 
   protected readonly isEdit = computed(() => !!this.entry());
   protected readonly date = linkedSignal<Date | null>(() => {
-    const entry = this.entry();
-    return entry ? parseIsoDate(entry.date) : null;
+    const date = this.entry()?.date ?? this.defaultDate();
+    return date ? parseIsoDate(date) : null;
   });
   protected readonly type = linkedSignal<DayType | null>(
     () => this.entry()?.type ?? DayType.Working,
@@ -74,11 +75,11 @@ export class EntryForm {
       return;
     }
 
-    const sameTypeMessage =
+    const typeChangeMessage =
       existing.type !== type ? ` Изменить тип на «${DAY_TYPE_LABELS[type]}»?` : '';
     const message = `
       На ${formatDate(date)} уже есть запись: «${DAY_TYPE_LABELS[existing.type]}».
-      ${sameTypeMessage}
+      ${typeChangeMessage}
     `;
 
     this.confirmationService.confirm({

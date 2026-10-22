@@ -9,7 +9,7 @@ import {
   viewChildren,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePickerModule } from 'primeng/datepicker';
+import { DatePickerDateMeta, DatePickerModule } from 'primeng/datepicker';
 
 import { parseIsoDate, toIsoDate } from '../calendar-date-utils';
 import { CalendarEntry } from '../calendar-models';
@@ -41,6 +41,7 @@ export class YearCalendar {
   readonly entries = input.required<CalendarEntry[]>();
   readonly selectedDate = input<string | null>(null);
   readonly dateSelect = output<string>();
+  readonly dateDblClick = output<string>();
 
   private readonly monthElements = viewChildren<ElementRef<HTMLElement>>('monthElement');
 
@@ -84,5 +85,12 @@ export class YearCalendar {
 
   protected onSelect(date: Date): void {
     this.dateSelect.emit(toIsoDate(date));
+  }
+
+  protected onDateDblClick(meta: DatePickerDateMeta): void {
+    if (meta.otherMonth) {
+      return;
+    }
+    this.dateDblClick.emit(toIsoDate(new Date(meta.year, meta.month, meta.day)));
   }
 }
