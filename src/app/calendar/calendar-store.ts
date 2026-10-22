@@ -11,15 +11,17 @@ export class CalendarStore {
 
   readonly error = signal<string | null>(null);
 
-  readonly years = toSignal(
+  private readonly loadedYears = toSignal(
     this.api.getYears().pipe(
       catchError(() => {
         this.error.set('Не удалось загрузить список годов');
         return of([]);
       }),
     ),
-    { initialValue: [] },
   );
+
+  readonly years = computed(() => this.loadedYears() ?? []);
+  readonly isYearsLoading = computed(() => this.loadedYears() === undefined);
 
   readonly year = linkedSignal<number[], number | null>({
     source: this.years,
@@ -43,8 +45,11 @@ export class CalendarStore {
   });
 
   readonly isLoading = computed(() => {
+    if (this.isYearsLoading()) {
+      return true;
+    }
     const year = this.year();
-    return year !== null && this.loadingYears().has(year);
+    return year !== null && !this.entriesByYear()[year] && this.error() === null;
   });
 
   readonly selectedEntry = computed(

@@ -11,6 +11,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectModule } from 'primeng/select';
 import { filter, switchMap, take } from 'rxjs';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -28,6 +29,7 @@ import { YearCalendar } from '../year-calendar/year-calendar';
     FormsModule,
     ButtonModule,
     ConfirmDialogModule,
+    ProgressSpinnerModule,
     SelectModule,
     ToolbarModule,
     EntriesTable,
