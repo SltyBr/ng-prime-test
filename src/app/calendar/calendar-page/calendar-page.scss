@@ -55,3 +55,25 @@
     background: color-mix(in srgb, var(--p-surface-100) 70%, transparent);
   }
 }
+
+@media (max-width: 768px) {
+  :host {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+
+    &__table {
+      height: 40vh;
+      border-right: none;
+      border-bottom: 1px solid var(--p-content-border-color);
+    }
+
+    &__calendar-scroll {
+      height: auto;
+      overflow-y: visible;
+    }
+  }
+}
