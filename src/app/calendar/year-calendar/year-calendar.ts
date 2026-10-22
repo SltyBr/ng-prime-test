@@ -1,8 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { DatePickerDateMeta, DatePickerModule } from 'primeng/datepicker';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  afterRenderEffect,
+  computed,
+  input,
+  output,
+  viewChildren,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { DatePickerModule } from 'primeng/datepicker';
 
-import { toIsoDate } from '../calendar-date-utils';
-import { CalendarEntry, DayType } from '../calendar-models';
+import { parseIsoDate, toIsoDate } from '../calendar-date-utils';
+import { CalendarEntry } from '../calendar-models';
+import { DayClassesPipe } from '../pipes/day-classes-pipe';
 
 interface MonthView {
   name: string;
@@ -34,7 +45,7 @@ const MONTH_NAMES = [
 
 @Component({
   selector: 'app-year-calendar',
-  imports: [DatePickerModule],
+  imports: [FormsModule, DatePickerModule, DayClassesPipe],
   templateUrl: './year-calendar.html',
   styleUrl: './year-calendar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,6 +53,10 @@ const MONTH_NAMES = [
 export class YearCalendar {
   readonly year = input.required<number>();
   readonly entries = input.required<CalendarEntry[]>();
+  readonly selectedDate = input<string | null>(null);
+  readonly dateSelect = output<string>();
+
+  private readonly monthElements = viewChildren<ElementRef<HTMLElement>>('monthElement');
 
   private readonly today = new Date();
   protected readonly todayLabel = `Сегодня ${TODAY_FORMAT.format(this.today)}`;
@@ -55,21 +70,33 @@ export class YearCalendar {
     })),
   );
 
-  private readonly typeByDate = computed(
+  protected readonly selectedDay = computed(() => {
+    const date = this.selectedDate();
+    return date ? parseIsoDate(date) : null;
+  });
+
+  protected readonly selectedMonth = computed(() => {
+    const day = this.selectedDay();
+    return day && day.getFullYear() === this.year() ? day.getMonth() : null;
+  });
+
+  protected readonly typeByDate = computed(
     () => new Map(this.entries().map((entry) => [entry.date, entry.type])),
   );
 
-  protected dayClasses(meta: DatePickerDateMeta): Record<string, boolean> {
-    const type = this.typeByDate().get(toIsoDate(new Date(meta.year, meta.month, meta.day)));
-    const weekDay = new Date(meta.year, meta.month, meta.day).getDay();
+  constructor() {
+    afterRenderEffect(() => {
+      const month = this.selectedMonth();
+      if (month !== null) {
+        this.monthElements()[month]?.nativeElement.scrollIntoView({
+          block: 'nearest',
+          behavior: 'smooth',
+        });
+      }
+    });
+  }
 
-    return {
-      'calendar-day': true,
-      'calendar-day--other-month': !!meta.otherMonth,
-      'calendar-day--today': !!meta.today,
-      'calendar-day--weekend': type === undefined && (weekDay === 0 || weekDay === 6),
-      'calendar-day--working': type === DayType.Working,
-      'calendar-day--non-working': type === DayType.NonWorking,
-    };
+  protected onSelect(date: Date): void {
+    this.dateSelect.emit(toIsoDate(date));
   }
 }

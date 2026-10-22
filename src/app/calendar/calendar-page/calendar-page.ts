@@ -1,12 +1,22 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  afterRenderEffect,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogService } from 'primeng/dynamicdialog';
 import { SelectModule } from 'primeng/select';
-import { take } from 'rxjs';
+import { filter, switchMap, take } from 'rxjs';
 import { ToolbarModule } from 'primeng/toolbar';
 
-import { CalendarEntry } from '../calendar-models';
+import { parseIsoDate } from '../calendar-date-utils';
+import { CalendarEntry, DAY_TYPE_LABELS } from '../calendar-models';
 import { CalendarStore } from '../calendar-store';
 import { EntriesTable } from '../entries-table/entries-table';
 import { EntryForm } from '../entry-form/entry-form';
@@ -14,32 +24,74 @@ import { YearCalendar } from '../year-calendar/year-calendar';
 
 @Component({
   selector: 'app-calendar-page',
-  imports: [FormsModule, ButtonModule, SelectModule, ToolbarModule, EntriesTable, YearCalendar],
-  providers: [CalendarStore, DialogService],
+  imports: [
+    FormsModule,
+    ButtonModule,
+    ConfirmDialogModule,
+    SelectModule,
+    ToolbarModule,
+    EntriesTable,
+    YearCalendar,
+  ],
+  providers: [CalendarStore, DialogService, ConfirmationService],
   templateUrl: './calendar-page.html',
   styleUrl: './calendar-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalendarPage {
   private readonly dialogService = inject(DialogService);
+  private readonly confirmationService = inject(ConfirmationService);
   protected readonly store = inject(CalendarStore);
 
+  private readonly calendarScroll = viewChild.required<ElementRef<HTMLElement>>('calendarScroll');
+
+  constructor() {
+    afterRenderEffect(() => {
+      this.store.year();
+      this.calendarScroll().nativeElement.scrollTo({ top: 0 });
+    });
+  }
+
   openEntryDialog(entry?: CalendarEntry): void {
+    const year = this.store.year();
+    if (year === null) {
+      return;
+    }
+
     this.dialogService
       .open(EntryForm, {
         header: entry ? 'Изменить запись' : 'Добавить запись',
         modal: true,
         closable: true,
         width: '26rem',
-        inputValues: { entry },
+        inputValues: { entry, year, entries: this.store.entries() },
         dismissableMask: true,
       })
-      ?.onClose.pipe(take(1))
-      .subscribe((result?: CalendarEntry) => {
-        if (result) {
-          // TODO: сохранить через стор
-          console.log('entry dialog result', result);
-        }
-      });
+      ?.onClose.pipe(
+        take(1),
+        filter((result?: CalendarEntry): result is CalendarEntry => !!result),
+        switchMap((result) => this.store.save(result)),
+      )
+      .subscribe();
+  }
+
+  removeSelected(): void {
+    const entry = this.store.selectedEntry();
+    if (!entry) {
+      return;
+    }
+
+    const date = parseIsoDate(entry.date);
+    this.confirmationService.confirm({
+      header: 'Удалить запись',
+      message: `Удалить запись ${date.toLocaleDateString('ru-RU')} («${DAY_TYPE_LABELS[entry.type]}»)? `,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Удалить',
+      rejectLabel: 'Отмена',
+      acceptButtonProps: { severity: 'danger' },
+      rejectButtonProps: { severity: 'secondary', text: true },
+      accept: () => this.store.remove(entry.date).subscribe(),
+      dismissableMask: true,
+    });
   }
 }

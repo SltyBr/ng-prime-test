@@ -11,6 +11,7 @@
       text
       size="small"
       [disabled]="!store.selectedEntry()"
+      (click)="removeSelected()"
     >
       <img src="icons/delete.svg" alt="" />
       Удалить
@@ -45,9 +46,16 @@
     (rowDblClick)="openEntryDialog($event)"
   />
 
-  <div class="content__calendar">
+  <div #calendarScroll class="content__calendar">
     @if (store.year(); as year) {
-      <app-year-calendar [year]="year" [entries]="store.entries()" />
+      <app-year-calendar
+        [year]="year"
+        [entries]="store.entries()"
+        [selectedDate]="store.selectedDate()"
+        (dateSelect)="store.selectDate($event)"
+      />
     }
   </div>
 </main>
+
+<p-confirmdialog />

@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { IftaLabelModule } from 'primeng/iftalabel';
@@ -11,15 +13,29 @@ import { CalendarEntry, DAY_TYPE_LABELS, DayType } from '../calendar-models';
 
 @Component({
   selector: 'app-entry-form',
-  imports: [FormsModule, ButtonModule, DatePickerModule, IftaLabelModule, SelectModule],
+  imports: [
+    FormsModule,
+    ButtonModule,
+    ConfirmDialogModule,
+    DatePickerModule,
+    IftaLabelModule,
+    SelectModule,
+  ],
+  providers: [ConfirmationService],
   templateUrl: './entry-form.html',
   styleUrl: './entry-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EntryForm {
   private readonly ref = inject<DynamicDialogRef<EntryForm>>(DynamicDialogRef);
+  private readonly confirmationService = inject(ConfirmationService);
 
   readonly entry = input<CalendarEntry>();
+  readonly year = input.required<number>();
+  readonly entries = input<CalendarEntry[]>([]);
+
+  protected readonly minDate = computed(() => new Date(this.year(), 0, 1));
+  protected readonly maxDate = computed(() => new Date(this.year(), 11, 31));
 
   protected readonly typeOptions = [DayType.Working, DayType.NonWorking].map((value) => ({
     value,
@@ -40,7 +56,28 @@ export class EntryForm {
     if (date === null || type === null) {
       return;
     }
-    this.ref.close({ date: toIsoDate(date), type } satisfies CalendarEntry);
+
+    const result: CalendarEntry = { date: toIsoDate(date), type };
+    const existing = this.isEdit()
+      ? undefined
+      : this.entries().find((entry) => entry.date === result.date);
+
+    if (!existing) {
+      this.ref.close(result);
+      return;
+    }
+
+    this.confirmationService.confirm({
+      header: 'Запись уже существует',
+      message:
+        `На ${date.toLocaleDateString('ru-RU')} уже есть запись: «${DAY_TYPE_LABELS[existing.type]}». ` +
+        `Изменить тип на «${DAY_TYPE_LABELS[type]}»?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Редактировать',
+      rejectLabel: 'Отмена',
+      rejectButtonProps: { severity: 'secondary', text: true },
+      accept: () => this.ref.close(result),
+    });
   }
 
   protected cancel(): void {

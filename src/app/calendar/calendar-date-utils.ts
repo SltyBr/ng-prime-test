@@ -1,3 +1,10 @@
+import { DayType } from './calendar-models';
+
+export function standardDayType(date: Date): DayType {
+  const weekDay = date.getDay();
+  return weekDay === 0 || weekDay === 6 ? DayType.NonWorking : DayType.Working;
+}
+
 export function parseIsoDate(date: string): Date {
   const [year, month, day] = date.split('-').map(Number);
   return new Date(year, month - 1, day);

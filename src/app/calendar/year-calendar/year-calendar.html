@@ -1,5 +1,5 @@
-@for (month of months(); track month.firstDay.getTime()) {
-  <section class="month">
+@for (month of months(); track month.firstDay.getTime(); let index = $index) {
+  <section #monthElement class="month">
     <header class="month__header">
       <h3 class="month__title">{{ month.name }}</h3>
       @if (month.isCurrent) {
@@ -14,9 +14,11 @@
       [defaultDate]="month.firstDay"
       [minDate]="month.firstDay"
       [maxDate]="month.lastDay"
+      [ngModel]="selectedMonth() === index ? selectedDay() : null"
+      (ngModelChange)="onSelect($event)"
     >
-      <ng-template #date let-meta>
-        <span [class]="dayClasses(meta)">{{ meta.day }}</span>
+      <ng-template #date let-meta let-selected="selected">
+        <span [class]="meta | dayClasses: typeByDate() : selected">{{ meta.day }}</span>
       </ng-template>
     </p-datepicker>
   </section>

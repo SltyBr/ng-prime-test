@@ -70,6 +70,43 @@ export class CalendarStore {
     this.selectedDate.set(date);
   }
 
+  save(entry: CalendarEntry): Observable<CalendarEntry> {
+    return this.api.save(entry).pipe(
+      tap((saved) => {
+        this.updateYear(saved.date, (entries) => [
+          ...entries.filter((item) => item.date !== saved.date),
+          saved,
+        ]);
+        this.selectedDate.set(saved.date);
+      }),
+      catchError(() => {
+        this.error.set('Не удалось сохранить запись');
+        return EMPTY;
+      }),
+    );
+  }
+
+  remove(date: string): Observable<string> {
+    return this.api.remove(date).pipe(
+      tap((removed) => {
+        this.updateYear(removed, (entries) => entries.filter((item) => item.date !== removed));
+        this.selectedDate.set(null);
+      }),
+      catchError(() => {
+        this.error.set('Не удалось удалить запись');
+        return EMPTY;
+      }),
+    );
+  }
+
+  private updateYear(date: string, change: (entries: CalendarEntry[]) => CalendarEntry[]): void {
+    const year = Number(date.slice(0, 4));
+    this.entriesByYear.update((all) => ({
+      ...all,
+      [year]: sortByDate(change(all[year] ?? [])),
+    }));
+  }
+
   private loadYear(year: number): Observable<CalendarEntry[]> {
     this.error.set(null);
     this.setLoading(year, true);

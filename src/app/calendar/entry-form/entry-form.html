@@ -4,6 +4,8 @@
     [ngModel]="date()"
     (ngModelChange)="date.set($event)"
     [disabled]="isEdit()"
+    [minDate]="minDate()"
+    [maxDate]="maxDate()"
     showIcon
     iconDisplay="input"
     appendTo="body"
@@ -32,3 +34,5 @@
   </button>
   <button pButton type="button" severity="secondary" text (click)="cancel()">Отменить</button>
 </div>
+
+<p-confirmdialog />

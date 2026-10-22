@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, delay, map } from 'rxjs';
+import { Observable, delay, map, of } from 'rxjs';
 
 import { CalendarEntry, CalendarYearDto } from './calendar-models';
 
@@ -20,5 +20,13 @@ export class CalendarApi {
       map((dto) => dto.entries),
       delay(MOCK_DELAY_MS),
     );
+  }
+
+  save(entry: CalendarEntry): Observable<CalendarEntry> {
+    return of(entry).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  remove(date: string): Observable<string> {
+    return of(date).pipe(delay(MOCK_DELAY_MS));
   }
 }
