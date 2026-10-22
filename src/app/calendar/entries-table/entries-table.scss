@@ -1,0 +1,14 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+tr {
+  user-select: none;
+}
+
+th {
+  width: 50%;
+}

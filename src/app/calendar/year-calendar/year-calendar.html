@@ -1,0 +1,23 @@
+@for (month of months(); track month.firstDay.getTime()) {
+  <section class="month">
+    <header class="month__header">
+      <h3 class="month__title">{{ month.name }}</h3>
+      @if (month.isCurrent) {
+        <span class="month__today">{{ todayLabel }}</span>
+      }
+    </header>
+
+    <p-datepicker
+      inline
+      showOtherMonths
+      [selectOtherMonths]="false"
+      [defaultDate]="month.firstDay"
+      [minDate]="month.firstDay"
+      [maxDate]="month.lastDay"
+    >
+      <ng-template #date let-meta>
+        <span [class]="dayClasses(meta)">{{ meta.day }}</span>
+      </ng-template>
+    </p-datepicker>
+  </section>
+}

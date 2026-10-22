@@ -1,0 +1,38 @@
+<p-toolbar class="toolbar">
+  <ng-template #start>
+    <button pButton type="button" severity="secondary" text size="small" (click)="openEntryDialog()">
+      <img src="icons/plus.svg" alt="" />
+      Добавить
+    </button>
+    <button pButton type="button" severity="danger" text size="small" [disabled]="!selected()">
+      <img src="icons/delete.svg" alt="" />
+      Удалить
+    </button>
+  </ng-template>
+
+  <ng-template #end>
+    <label class="year-select" for="year">
+      Год:
+      <p-select
+        inputId="year"
+        [options]="years"
+        [ngModel]="year()"
+        (ngModelChange)="year.set($event)"
+        size="small"
+      />
+    </label>
+  </ng-template>
+</p-toolbar>
+
+<main class="content">
+  <app-entries-table
+    class="content__table"
+    [entries]="entries()"
+    [(selected)]="selected"
+    (rowDblClick)="openEntryDialog($event)"
+  />
+
+  <div class="content__calendar">
+    <app-year-calendar [year]="year()" [entries]="entries()" />
+  </div>
+</main>

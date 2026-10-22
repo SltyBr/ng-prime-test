@@ -3,6 +3,8 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
 
+import { PRIMENG_RU } from './primeng-ru';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
@@ -12,6 +14,7 @@ export const appConfig: ApplicationConfig = {
         preset: Aura,
         options: { darkModeSelector: false },
       },
+      translation: PRIMENG_RU,
     }),
   ],
 };

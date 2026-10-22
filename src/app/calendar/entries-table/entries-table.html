@@ -1,0 +1,32 @@
+<p-table
+  [value]="entries()"
+  [(selection)]="selected"
+  selectionMode="single"
+  dataKey="date"
+  sortField="date"
+  [sortOrder]="1"
+  [scrollable]="true"
+  scrollHeight="flex"
+  size="small"
+  showGridlines
+>
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="date">Дата <p-sort-icon field="date" /></th>
+      <th pSortableColumn="type">Тип <p-sort-icon field="type" /></th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-entry>
+    <tr [pSelectableRow]="entry" (dblclick)="rowDblClick.emit(entry)">
+      <td>{{ entry.date | date: 'dd.MM.yyyy' }}</td>
+      <td>{{ typeLabel(entry) }}</td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="2">Нет записей</td>
+    </tr>
+  </ng-template>
+</p-table>
