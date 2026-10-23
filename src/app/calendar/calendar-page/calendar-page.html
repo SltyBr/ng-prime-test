@@ -33,7 +33,7 @@
         inputId="year"
         [options]="store.years()"
         [ngModel]="store.year()"
-        (ngModelChange)="store.selectYear($event)"
+        (ngModelChange)="selectYear($event)"
         [loading]="store.yearsState().status === 'loading'"
         [disabled]="!store.years().length"
         size="small"

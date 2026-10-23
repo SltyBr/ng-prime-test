@@ -73,14 +73,16 @@ export class YearCalendar {
   );
 
   constructor() {
-    afterRenderEffect(() => {
-      const month = this.selectedMonth();
-      if (month !== null) {
-        this.monthElements()[month]?.nativeElement.scrollIntoView({
-          block: 'nearest',
-          behavior: 'smooth',
-        });
-      }
+    afterRenderEffect({
+      write: () => {
+        const month = this.selectedMonth();
+        if (month !== null) {
+          this.monthElements()[month]?.nativeElement.scrollIntoView({
+            block: 'nearest',
+            behavior: 'smooth',
+          });
+        }
+      },
     });
   }
 

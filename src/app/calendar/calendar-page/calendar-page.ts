@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  afterRenderEffect,
   inject,
   viewChild,
 } from '@angular/core';
@@ -52,11 +51,9 @@ export class CalendarPage {
 
   private readonly calendarScroll = viewChild.required<ElementRef<HTMLElement>>('calendarScroll');
 
-  constructor() {
-    afterRenderEffect(() => {
-      this.store.year();
-      this.calendarScroll().nativeElement.scrollTo({ top: 0 });
-    });
+  selectYear(year: number): void {
+    this.store.selectYear(year);
+    this.calendarScroll().nativeElement.scrollTo({ top: 0 });
   }
 
   openCreateDialog(date?: string): void {
