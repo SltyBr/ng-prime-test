@@ -1,3 +1,5 @@
+@let selectedYear = store.selectedYear();
+
 <p-toolbar class="toolbar">
   <ng-template #start>
     <button
@@ -6,7 +8,7 @@
       severity="secondary"
       text
       size="small"
-      [disabled]="store.yearState().status !== 'loaded'"
+      [disabled]="!selectedYear || entries().isLoading || entries().isError?.reason === 'loaded'"
       (click)="openCreateDialog()"
     >
       <img src="icons/plus.svg" alt="" />
@@ -18,7 +20,7 @@
       severity="danger"
       text
       size="small"
-      [disabled]="!store.selectedEntry()"
+      [disabled]="!selectedEntry() || entries().isLoading"
       (click)="removeSelected()"
     >
       <img src="icons/delete.svg" alt="" />
@@ -31,48 +33,58 @@
       Год:
       <p-select
         inputId="year"
-        [options]="store.years()"
-        [ngModel]="store.year()"
-        (ngModelChange)="selectYear($event)"
-        [loading]="store.yearsState().status === 'loading'"
-        [disabled]="!store.years().length"
+        [options]="years().data"
+        [ngModel]="selectedYear"
+        (ngModelChange)="changeYear($event)"
+        [loading]="years().isLoading"
+        [disabled]="!years().data.length || entries().isLoading"
         size="small"
       />
     </label>
   </ng-template>
 </p-toolbar>
 
-@if (store.yearsState().status === 'error') {
-  <p class="error">{{ texts.yearsLoadError }}</p>
+@if (years().isError) {
+  <p class="error">
+    {{ texts.yearsLoadError }}
+    <button pButton type="button" severity="danger" text size="small" (click)="reloadYears()">
+      {{ texts.reload }}
+    </button>
+  </p>
 }
-@if (store.yearState().status === 'error') {
-  <p class="error">{{ texts.entriesLoadError(store.year()!) }}</p>
+@if (entries().isError?.reason === 'loaded' && selectedYear) {
+  <p class="error">
+    {{ texts.entriesLoadError(selectedYear) }}
+    <button pButton type="button" severity="danger" text size="small" (click)="reloadYear()">
+      {{ texts.reload }}
+    </button>
+  </p>
 }
 
 <main class="content">
   <app-entries-table
     class="content__table"
-    [entries]="store.entries()"
-    [loading]="store.yearState().status === 'loading'"
-    [selected]="store.selectedEntry()"
-    (selectedChange)="store.selectDate($event?.date ?? null)"
+    [entries]="entries().data"
+    [loading]="years().isLoading || entries().isLoading"
+    [selected]="selectedEntry()"
+    (selectedChange)="setSelectedEntry($event)"
     (rowDblClick)="openEditDialog($event)"
   />
 
   <div class="content__calendar">
-    <div #calendarScroll class="content__calendar-scroll">
-      @if (store.year(); as year) {
+    <div class="content__calendar-scroll">
+      @if (selectedYear) {
         <app-year-calendar
-          [year]="year"
-          [entries]="store.entries()"
-          [selectedDate]="store.selectedDate()"
-          (dateSelect)="store.selectDate($event)"
+          [year]="selectedYear"
+          [entries]="entries().data"
+          [selectedDate]="selectedDate()"
+          (dateSelect)="selectDate($event)"
           (dateDblClick)="openDialogForDate($event)"
         />
       }
     </div>
 
-    @if (store.yearState().status === 'loading') {
+    @if (entries().isLoading) {
       <div class="content__loader">
         <p-progress-spinner strokeWidth="4" ariaLabel="Загрузка календаря" />
       </div>

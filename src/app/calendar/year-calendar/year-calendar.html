@@ -14,12 +14,16 @@
       [defaultDate]="month.firstDay"
       [minDate]="month.firstDay"
       [maxDate]="month.lastDay"
-      [ngModel]="selectedMonth() === $index ? selectedDay() : null"
-      (ngModelChange)="onSelect($event)"
+      (onSelect)="onSelect($event)"
     >
-      <ng-template #date let-meta let-selected="selected">
+      <ng-template #date let-meta>
         <span
-          [class]="meta | dayClasses: typeByDate() : selected"
+          [class]="
+            meta
+              | dayClasses
+                : typeByDate()
+                : selectedMonth() === $index && selectedDay()?.getDate() === meta.day
+          "
           (dblclick)="onDateDblClick(meta)"
         >
           {{ meta.day }}

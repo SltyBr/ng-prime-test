@@ -47,6 +47,7 @@ export class YearCalendar {
   private readonly monthElements = viewChildren<ElementRef<HTMLElement>>('monthElement');
 
   private readonly today = new Date();
+  private emittedDate: string | null = null;
   protected readonly todayLabel = CALENDAR_TEXTS.today(TODAY_FORMAT.format(this.today));
 
   protected readonly months = computed<MonthView[]>(() =>
@@ -75,19 +76,31 @@ export class YearCalendar {
   constructor() {
     afterRenderEffect({
       write: () => {
-        const month = this.selectedMonth();
-        if (month !== null) {
-          this.monthElements()[month]?.nativeElement.scrollIntoView({
-            block: 'nearest',
-            behavior: 'smooth',
-          });
+        if (this.selectedDate() === this.emittedDate) {
+          return;
         }
+
+        const day = this.selectedDay();
+        const month = this.selectedMonth();
+        if (day === null || month === null) {
+          return;
+        }
+        const monthElement = this.monthElements()[month]?.nativeElement;
+        const dayCells = Array.from(
+          monthElement?.querySelectorAll('.calendar-day:not(.calendar-day--other-month)') ?? [],
+        );
+        const dayElement = dayCells.find(
+          (element) => element.textContent?.trim() === String(day.getDate()),
+        );
+
+        dayElement?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       },
     });
   }
 
   protected onSelect(date: Date): void {
-    this.dateSelect.emit(toIsoDate(date));
+    this.emittedDate = toIsoDate(date);
+    this.dateSelect.emit(this.emittedDate);
   }
 
   protected onDateDblClick(meta: DatePickerDateMeta): void {

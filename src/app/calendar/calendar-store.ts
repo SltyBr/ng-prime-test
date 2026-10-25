@@ -1,137 +1,163 @@
-import { Injectable, computed, inject, linkedSignal, signal } from '@angular/core';
-import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { EMPTY, Observable, catchError, filter, map, mergeMap, of, tap } from 'rxjs';
-
-import { LoadState } from '../shared/types/load-state';
+import { Injectable, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CalendarApi } from './calendar-api';
-import { getYear } from './calendar-date-utils';
+import {
+  BehaviorSubject,
+  catchError,
+  filter,
+  map,
+  merge,
+  of,
+  startWith,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { CalendarEntry } from './calendar-models';
 
 @Injectable()
 export class CalendarStore {
   private readonly api = inject(CalendarApi);
+  private readonly _reloadYears = new BehaviorSubject<boolean>(true);
+  private readonly _reloadYear = new BehaviorSubject<boolean>(true);
+  private readonly _addItem = new Subject<CalendarEntry>();
+  private readonly _removeItem = new Subject<string>();
+  private readonly _selectedYear = new BehaviorSubject<number | null>(null);
+  private readonly _entriesCache = new Map<number, CalendarEntry[]>();
+  private readonly _selectedEntry = signal<CalendarEntry | null>(null);
 
-  readonly yearsState = toSignal(
-    this.api.getYears().pipe(
-      map((data): LoadState<number[]> => ({ status: 'loaded', data })),
-      catchError(() => of<LoadState<number[]>>({ status: 'error' })),
-    ),
-    { initialValue: { status: 'loading' } },
-  );
+  addItem$ = this._addItem.asObservable();
+  removeItem$ = this._removeItem.asObservable();
+  selectedYear$ = this._selectedYear.asObservable();
 
-  readonly years = computed(() => {
-    const state = this.yearsState();
-    return state.status === 'loaded' ? state.data : [];
-  });
+  selectedYear = toSignal(this.selectedYear$, { initialValue: null });
+  selectedEntry = this._selectedEntry.asReadonly();
 
-  private readonly _year = linkedSignal<number[], number | null>({
-    source: this.years,
-    computation: (years) => {
-      const currentYear = new Date().getFullYear();
-      return years.includes(currentYear) ? currentYear : (years[0] ?? null);
-    },
-  });
-  readonly year = this._year.asReadonly();
-
-  private readonly _selectedDate = linkedSignal<number | null, string | null>({
-    source: this._year,
-    computation: () => null,
-  });
-  readonly selectedDate = this._selectedDate.asReadonly();
-
-  private readonly yearStates = signal<Record<number, LoadState<CalendarEntry[]>>>({});
-
-  readonly yearState = computed<LoadState<CalendarEntry[]>>(() => {
-    const year = this.year();
-    if (year === null) {
-      return this.yearsState().status === 'loading'
-        ? { status: 'loading' }
-        : { status: 'loaded', data: [] };
-    }
-
-    return this.yearStates()[year] ?? { status: 'loading' };
-  });
-
-  readonly entries = computed(() => {
-    const state = this.yearState();
-    return state.status === 'loaded' ? state.data : [];
-  });
-
-  readonly selectedEntry = computed(
-    () => this.entries().find((entry) => entry.date === this.selectedDate()) ?? null,
-  );
-
-  constructor() {
-    toObservable(this.year)
-      .pipe(
+  getEntries$ = this._reloadYear.pipe(
+    switchMap(() => {
+      return this.selectedYear$.pipe(
         filter(Boolean),
-        filter((year) => {
-          const status = this.yearStates()[year]?.status;
-          return !status || status === 'error';
+        switchMap((year) => {
+          const cache = this._entriesCache.get(year);
+          const source$ = cache ? of(cache) : this.api.getYear(year);
+
+          return source$.pipe(
+            map((value) => ({ action: 'loaded' as const, data: value })),
+            startWith({ action: 'initLoading' as const }),
+            catchError(() => of({ action: 'error' as const, reason: 'loaded' as const })),
+          );
         }),
-        mergeMap((year) => this.loadYear(year)),
-        takeUntilDestroyed(),
-      )
-      .subscribe();
-  }
+      );
+    }),
+  );
 
-  selectYear(year: number): void {
-    this._year.set(year);
-  }
+  getYears = toSignal(
+    this._reloadYears.pipe(
+      switchMap(() =>
+        this.api.getYears().pipe(
+          map((data) => ({ isLoading: false, isError: false, data })),
+          tap(({ data }) => {
+            if (data.length) {
+              const year = data[0];
+              this._selectedYear.next(year);
+            }
+          }),
+          startWith({ isLoading: true, isError: false, data: [] }),
+          catchError(() => of({ isLoading: false, isError: true, data: [] })),
+        ),
+      ),
+    ),
+    { initialValue: { isLoading: false, isError: false, data: [] } },
+  );
 
-  selectDate(date: string | null): void {
-    this._selectedDate.set(date);
-  }
+  entries = toSignal(
+    merge(
+      this.addItem$.pipe(
+        switchMap((item) =>
+          this.api.save(item).pipe(
+            map((value) => ({ action: 'add' as const, data: value })),
+            startWith({ action: 'initLoading' as const }),
+            catchError(() => of({ action: 'error' as const, reason: 'add' as const })),
+          ),
+        ),
+      ),
+      this.removeItem$.pipe(
+        switchMap((value) =>
+          this.api.remove(value).pipe(
+            tap((date) => {
+              if (this.selectedEntry()?.date === date) {
+                this.resetSelectedEntry();
+              }
+            }),
+            map((value) => ({ action: 'remove' as const, data: value })),
+            startWith({ action: 'initLoading' as const }),
+            catchError(() => of({ action: 'error' as const, reason: 'remove' as const })),
+          ),
+        ),
+      ),
+      this.getEntries$,
+    ).pipe(
+      map((state) => {
+        const selectedYear = this._selectedYear.value!;
 
-  save(entry: CalendarEntry): Observable<CalendarEntry> {
-    return this.api.save(entry).pipe(
-      tap((saved) => {
-        this.upsertEntry(saved);
-        this._selectedDate.set(saved.date);
+        const cache = this._entriesCache.get(selectedYear) || [];
+
+        if (state.action === 'loaded') {
+          this._entriesCache.set(selectedYear, state.data);
+        }
+
+        if (state.action === 'add') {
+          this._entriesCache.set(selectedYear, [
+            ...cache.filter((item) => item.date !== state.data.date),
+            state.data,
+          ]);
+        }
+
+        if (state.action === 'remove') {
+          this._entriesCache.set(
+            selectedYear,
+            cache.filter((item) => item.date !== state.data),
+          );
+        }
+
+        return {
+          isLoading: state.action === 'initLoading',
+          isError: state.action === 'error' ? { reason: state.reason } : null,
+          data: this._entriesCache.get(selectedYear) || [],
+        };
       }),
-    );
+    ),
+    {
+      initialValue: { isLoading: false, isError: null, data: [] },
+    },
+  );
+
+  reloadYears(): void {
+    this._reloadYears.next(true);
   }
 
-  remove(date: string): Observable<string> {
-    return this.api.remove(date).pipe(
-      tap((removed) => {
-        this.removeEntry(removed);
-        this._selectedDate.set(null);
-      }),
-    );
+  reloadYear(): void {
+    this._reloadYear.next(true);
   }
 
-  private upsertEntry(entry: CalendarEntry): void {
-    const year = getYear(entry.date);
-    const entries = this.loadedEntries(year).filter((item) => item.date !== entry.date);
-    this.setYearState(year, { status: 'loaded', data: [...entries, entry] });
+  changeSelectedYear(year: number): void {
+    this.resetSelectedEntry();
+    this._selectedYear.next(year);
   }
 
-  private removeEntry(date: string): void {
-    const year = getYear(date);
-    const entries = this.loadedEntries(year).filter((item) => item.date !== date);
-    this.setYearState(year, { status: 'loaded', data: entries });
+  addItem(value: CalendarEntry): void {
+    this._addItem.next(value);
   }
 
-  private loadedEntries(year: number): CalendarEntry[] {
-    const state = this.yearStates()[year];
-    return state?.status === 'loaded' ? state.data : [];
+  removeItem(date: string): void {
+    this._removeItem.next(date);
   }
 
-  private setYearState(year: number, state: LoadState<CalendarEntry[]>): void {
-    this.yearStates.update((all) => ({ ...all, [year]: state }));
+  setSelectedEntry(value: CalendarEntry | null): void {
+    this._selectedEntry.set(value);
   }
 
-  private loadYear(year: number): Observable<CalendarEntry[]> {
-    this.setYearState(year, { status: 'loading' });
-
-    return this.api.getYear(year).pipe(
-      tap((data) => this.setYearState(year, { status: 'loaded', data })),
-      catchError(() => {
-        this.setYearState(year, { status: 'error' });
-
-        return EMPTY;
-      }),
-    );
+  resetSelectedEntry(): void {
+    this._selectedEntry.set(null);
   }
 }

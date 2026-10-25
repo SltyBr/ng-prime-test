@@ -1,4 +1,3 @@
-/** Дни недели стандартного графика, которые считаются выходными (Date.getDay(): 0 — Вс, 6 — Сб) */
 export const STANDARD_WEEKEND_DAYS: readonly number[] = [0, 6];
 
 export const CALENDAR_TEXTS = {
@@ -9,6 +8,7 @@ export const CALENDAR_TEXTS = {
   removeAccept: 'Удалить',
   duplicateAccept: 'Редактировать',
   cancel: 'Отмена',
+  reload: 'Повторить',
   errorSummary: 'Ошибка',
   saveError: 'Не удалось сохранить запись',
   removeError: 'Не удалось удалить запись',

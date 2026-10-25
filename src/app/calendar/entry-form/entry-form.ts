@@ -15,7 +15,7 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { IftaLabelModule } from 'primeng/iftalabel';
 import { SelectModule } from 'primeng/select';
 
-import { formatDate, parseIsoDate, toIsoDate } from '../calendar-date-utils';
+import { findEntryByDate, formatDate, parseIsoDate, toIsoDate } from '../calendar-date-utils';
 import { CALENDAR_TEXTS } from '../calendar-constants';
 import { CalendarEntry, DAY_TYPE_LABELS, DayType } from '../calendar-models';
 
@@ -69,7 +69,7 @@ export class EntryForm {
     }
 
     const result: CalendarEntry = { date: toIsoDate(date), type };
-    const existing = !this.isEdit() && this.entries().find((entry) => entry.date === result.date);
+    const existing = !this.isEdit() && findEntryByDate(this.entries(), result.date);
 
     if (!existing) {
       this.ref.close(result);
