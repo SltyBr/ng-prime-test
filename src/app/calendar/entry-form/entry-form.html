@@ -29,7 +29,7 @@
 </p-iftalabel>
 
 <div class="actions">
-  <button pButton type="button" [disabled]="!isValid()" (click)="submit()">
+  <button pButton type="button" [disabled]="!isValid() || !isChanged()" (click)="submit()">
     {{ isEdit() ? 'Сохранить' : 'Создать' }}
   </button>
   <button pButton type="button" severity="secondary" text (click)="cancel()">Отменить</button>

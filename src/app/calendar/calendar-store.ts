@@ -15,6 +15,13 @@ import {
 } from 'rxjs';
 import { CalendarEntry } from './calendar-models';
 
+type EntriesState =
+  | { action: 'initLoading' }
+  | { action: 'loaded'; data: CalendarEntry[] }
+  | { action: 'add'; data: CalendarEntry }
+  | { action: 'remove'; data: string }
+  | { action: 'error'; reason: 'loaded' | 'add' | 'remove' };
+
 @Injectable()
 export class CalendarStore {
   private readonly api = inject(CalendarApi);
@@ -26,16 +33,9 @@ export class CalendarStore {
   private readonly _entriesCache = new Map<number, CalendarEntry[]>();
   private readonly _selectedEntry = signal<CalendarEntry | null>(null);
 
-  addItem$ = this._addItem.asObservable();
-  removeItem$ = this._removeItem.asObservable();
-  selectedYear$ = this._selectedYear.asObservable();
-
-  selectedYear = toSignal(this.selectedYear$, { initialValue: null });
-  selectedEntry = this._selectedEntry.asReadonly();
-
-  getEntries$ = this._reloadYear.pipe(
+  private getEntries$ = this._reloadYear.pipe(
     switchMap(() => {
-      return this.selectedYear$.pipe(
+      return this._selectedYear.pipe(
         filter(Boolean),
         switchMap((year) => {
           const cache = this._entriesCache.get(year);
@@ -50,6 +50,9 @@ export class CalendarStore {
       );
     }),
   );
+
+  selectedYear = toSignal(this._selectedYear, { initialValue: null });
+  selectedEntry = this._selectedEntry.asReadonly();
 
   getYears = toSignal(
     this._reloadYears.pipe(
@@ -72,7 +75,7 @@ export class CalendarStore {
 
   entries = toSignal(
     merge(
-      this.addItem$.pipe(
+      this._addItem.pipe(
         switchMap((item) =>
           this.api.save(item).pipe(
             map((value) => ({ action: 'add' as const, data: value })),
@@ -81,7 +84,7 @@ export class CalendarStore {
           ),
         ),
       ),
-      this.removeItem$.pipe(
+      this._removeItem.pipe(
         switchMap((value) =>
           this.api.remove(value).pipe(
             tap((date) => {
@@ -97,28 +100,10 @@ export class CalendarStore {
       ),
       this.getEntries$,
     ).pipe(
-      map((state) => {
+      map((state: EntriesState) => {
         const selectedYear = this._selectedYear.value!;
 
-        const cache = this._entriesCache.get(selectedYear) || [];
-
-        if (state.action === 'loaded') {
-          this._entriesCache.set(selectedYear, state.data);
-        }
-
-        if (state.action === 'add') {
-          this._entriesCache.set(selectedYear, [
-            ...cache.filter((item) => item.date !== state.data.date),
-            state.data,
-          ]);
-        }
-
-        if (state.action === 'remove') {
-          this._entriesCache.set(
-            selectedYear,
-            cache.filter((item) => item.date !== state.data),
-          );
-        }
+        this.updateCache(selectedYear, state);
 
         return {
           isLoading: state.action === 'initLoading',
@@ -131,6 +116,28 @@ export class CalendarStore {
       initialValue: { isLoading: false, isError: null, data: [] },
     },
   );
+
+  private updateCache(year: number, state: EntriesState): void {
+    const cache = this._entriesCache.get(year) || [];
+
+    if (state.action === 'loaded') {
+      this._entriesCache.set(year, state.data);
+    }
+
+    if (state.action === 'add') {
+      this._entriesCache.set(year, [
+        ...cache.filter((item) => item.date !== state.data.date),
+        state.data,
+      ]);
+    }
+
+    if (state.action === 'remove') {
+      this._entriesCache.set(
+        year,
+        cache.filter((item) => item.date !== state.data),
+      );
+    }
+  }
 
   reloadYears(): void {
     this._reloadYears.next(true);

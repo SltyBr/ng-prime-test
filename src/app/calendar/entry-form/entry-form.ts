@@ -61,6 +61,16 @@ export class EntryForm {
     () => this.entry()?.type ?? DayType.Working,
   );
   protected readonly isValid = computed(() => this.date() !== null && this.type() !== null);
+  protected readonly isChanged = computed(() => {
+    const entry = this.entry();
+    const date = this.date();
+
+    if (!entry) {
+      return true;
+    }
+
+    return this.type() !== entry.type || (date !== null && toIsoDate(date) !== entry.date);
+  });
 
   protected submit(): void {
     const date = this.date();
