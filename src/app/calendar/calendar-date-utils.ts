@@ -22,7 +22,7 @@ export function findEntryByDate(
   entries: readonly CalendarEntry[],
   date: string,
 ): CalendarEntry | undefined {
-  return entries.find((entry) => entry.date === date);
+  return entries.find(entry => entry.date === date);
 }
 
 export const formatDate = (date: Date, locale = LOCALE) => date.toLocaleDateString(locale);

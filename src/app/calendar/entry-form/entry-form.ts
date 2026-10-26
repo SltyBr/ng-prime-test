@@ -46,7 +46,7 @@ export class EntryForm {
   protected readonly minDate = computed(() => new Date(this.year(), 0, 1));
   protected readonly maxDate = computed(() => new Date(this.year(), 11, 31));
 
-  protected readonly typeOptions = [DayType.Working, DayType.NonWorking].map((value) => ({
+  protected readonly typeOptions = [DayType.Working, DayType.NonWorking].map(value => ({
     value,
     label: DAY_TYPE_LABELS[value],
   }));

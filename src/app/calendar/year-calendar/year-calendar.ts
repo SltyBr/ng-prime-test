@@ -72,7 +72,7 @@ export class YearCalendar {
   });
 
   protected readonly typeByDate = computed(
-    () => new Map(this.entries().map((entry) => [entry.date, entry.type])),
+    () => new Map(this.entries().map(entry => [entry.date, entry.type])),
   );
 
   constructor() {
@@ -92,7 +92,7 @@ export class YearCalendar {
           monthElement?.querySelectorAll('.calendar-day:not(.calendar-day--other-month)') ?? [],
         );
         const dayElement = dayCells.find(
-          (element) => element.textContent?.trim() === String(day.getDate()),
+          element => element.textContent?.trim() === String(day.getDate()),
         );
 
         dayElement?.scrollIntoView({ block: 'center', behavior: 'smooth' });

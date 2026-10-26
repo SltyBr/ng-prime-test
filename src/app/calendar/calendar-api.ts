@@ -11,7 +11,7 @@ const MOCK_ERROR_RATE = 0.1;
 function mockRequest<T>(source$: Observable<T>, rate = MOCK_ERROR_RATE): Observable<T> {
   return of(Math.random()).pipe(
     delay(MOCK_DELAY_MS),
-    switchMap((value) => (value > rate ? source$ : throwError(() => new Error()))),
+    switchMap(value => (value > rate ? source$ : throwError(() => new Error()))),
   );
 }
 
@@ -27,7 +27,7 @@ export class CalendarApi {
     return mockRequest(
       this.http
         .get<CalendarYearDto>(`${MOCK_DATA_URL}/${year}.json`)
-        .pipe(map((data) => data.entries)),
+        .pipe(map(data => data.entries)),
     );
   }
 

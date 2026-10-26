@@ -115,7 +115,7 @@ export class CalendarPage {
         focusOnShow: false,
       })
       ?.onClose.pipe(take(1), filter(Boolean))
-      .subscribe((result) => this.store.addItem(result));
+      .subscribe(result => this.store.addItem(result));
   }
 
   showErrorToast(detail: string): void {

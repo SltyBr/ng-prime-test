@@ -37,6 +37,7 @@ module.exports = defineConfig([
         'error',
         { blankLine: 'always', prev: '*', next: 'return' },
       ],
+      '@stylistic/arrow-parens': ['error', 'as-needed'],
     },
   },
   {

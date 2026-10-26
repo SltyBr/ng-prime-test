@@ -37,14 +37,14 @@ export class CalendarStore {
     switchMap(() => {
       return this._selectedYear.pipe(
         filter(Boolean),
-        switchMap((year) => {
+        switchMap(year => {
           const cache = this._entriesCache.get(year);
           const source$ = cache ? of(cache) : this.api.getYear(year);
 
           return source$.pipe(
-            map((value) => ({ action: 'loaded' as const, data: value })),
-            startWith({ action: 'initLoading' as const }),
-            catchError(() => of({ action: 'error' as const, reason: 'loaded' as const })),
+            map((data): EntriesState => ({ action: 'loaded', data })),
+            startWith<EntriesState>({ action: 'initLoading' }),
+            catchError(() => of<EntriesState>({ action: 'error', reason: 'loaded' })),
           );
         }),
       );
@@ -58,7 +58,7 @@ export class CalendarStore {
     this._reloadYears.pipe(
       switchMap(() =>
         this.api.getYears().pipe(
-          map((data) => ({ isLoading: false, isError: false, data })),
+          map(data => ({ isLoading: false, isError: false, data })),
           tap(({ data }) => {
             if (data.length) {
               const year = data[0];
@@ -76,31 +76,31 @@ export class CalendarStore {
   entries = toSignal(
     merge(
       this._addItem.pipe(
-        switchMap((item) =>
+        switchMap(item =>
           this.api.save(item).pipe(
-            map((value) => ({ action: 'add' as const, data: value })),
-            startWith({ action: 'initLoading' as const }),
-            catchError(() => of({ action: 'error' as const, reason: 'add' as const })),
+            map((data): EntriesState => ({ action: 'add', data })),
+            startWith<EntriesState>({ action: 'initLoading' }),
+            catchError(() => of<EntriesState>({ action: 'error', reason: 'add' })),
           ),
         ),
       ),
       this._removeItem.pipe(
-        switchMap((value) =>
+        switchMap(value =>
           this.api.remove(value).pipe(
-            tap((date) => {
+            tap(date => {
               if (this.selectedEntry()?.date === date) {
                 this.resetSelectedEntry();
               }
             }),
-            map((value) => ({ action: 'remove' as const, data: value })),
-            startWith({ action: 'initLoading' as const }),
-            catchError(() => of({ action: 'error' as const, reason: 'remove' as const })),
+            map((data): EntriesState => ({ action: 'remove', data })),
+            startWith<EntriesState>({ action: 'initLoading' }),
+            catchError(() => of<EntriesState>({ action: 'error', reason: 'remove' })),
           ),
         ),
       ),
       this.getEntries$,
     ).pipe(
-      map((state: EntriesState) => {
+      map(state => {
         const selectedYear = this._selectedYear.value!;
 
         this.updateCache(selectedYear, state);
@@ -126,7 +126,7 @@ export class CalendarStore {
 
     if (state.action === 'add') {
       this._entriesCache.set(year, [
-        ...cache.filter((item) => item.date !== state.data.date),
+        ...cache.filter(item => item.date !== state.data.date),
         state.data,
       ]);
     }
@@ -134,7 +134,7 @@ export class CalendarStore {
     if (state.action === 'remove') {
       this._entriesCache.set(
         year,
-        cache.filter((item) => item.date !== state.data),
+        cache.filter(item => item.date !== state.data),
       );
     }
   }
