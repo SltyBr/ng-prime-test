@@ -54,6 +54,7 @@ export class EntryForm {
   protected readonly isEdit = computed(() => !!this.entry());
   protected readonly date = linkedSignal<Date | null>(() => {
     const date = this.entry()?.date ?? this.defaultDate();
+
     return date ? parseIsoDate(date) : null;
   });
   protected readonly type = linkedSignal<DayType | null>(
@@ -73,6 +74,7 @@ export class EntryForm {
 
     if (!existing) {
       this.ref.close(result);
+
       return;
     }
 

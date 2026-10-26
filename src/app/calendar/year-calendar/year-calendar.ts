@@ -61,11 +61,13 @@ export class YearCalendar {
 
   protected readonly selectedDay = computed(() => {
     const date = this.selectedDate();
+
     return date ? parseIsoDate(date) : null;
   });
 
   protected readonly selectedMonth = computed(() => {
     const day = this.selectedDay();
+
     return day && day.getFullYear() === this.year() ? day.getMonth() : null;
   });
 

@@ -3,6 +3,7 @@ const eslint = require('@eslint/js');
 const { defineConfig } = require('eslint/config');
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
+const stylistic = require('@stylistic/eslint-plugin');
 
 module.exports = defineConfig([
   {
@@ -14,6 +15,7 @@ module.exports = defineConfig([
       angular.configs.tsRecommended,
     ],
     processor: angular.processInlineTemplates,
+    plugins: { '@stylistic': stylistic },
     rules: {
       '@angular-eslint/directive-selector': [
         'error',
@@ -30,6 +32,10 @@ module.exports = defineConfig([
           prefix: 'app',
           style: 'kebab-case',
         },
+      ],
+      '@stylistic/padding-line-between-statements': [
+        'error',
+        { blankLine: 'always', prev: '*', next: 'return' },
       ],
     },
   },
