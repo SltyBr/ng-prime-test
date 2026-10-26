@@ -45,6 +45,11 @@ export class EntryForm {
 
   protected readonly minDate = computed(() => new Date(this.year(), 0, 1));
   protected readonly maxDate = computed(() => new Date(this.year(), 11, 31));
+  protected readonly viewDate = computed(() => {
+    const today = new Date();
+
+    return today.getFullYear() === this.year() ? today : this.minDate();
+  });
 
   protected readonly typeOptions = [DayType.Working, DayType.NonWorking].map(value => ({
     value,
