@@ -102,13 +102,12 @@ export class CalendarStore {
     ).pipe(
       map(state => {
         const selectedYear = this._selectedYear.value!;
-
-        this.updateCache(selectedYear, state);
+        const data = this.updateCache(selectedYear, state);
 
         return {
           isLoading: state.action === 'initLoading',
           isError: state.action === 'error' ? { reason: state.reason } : null,
-          data: this._entriesCache.get(selectedYear) || [],
+          data,
         };
       }),
     ),
@@ -117,7 +116,7 @@ export class CalendarStore {
     },
   );
 
-  private updateCache(year: number, state: EntriesState): void {
+  private updateCache(year: number, state: EntriesState): CalendarEntry[] {
     const cache = this._entriesCache.get(year) || [];
 
     if (state.action === 'loaded') {
@@ -137,6 +136,8 @@ export class CalendarStore {
         cache.filter(item => item.date !== state.data),
       );
     }
+
+    return this._entriesCache.get(year) ?? [];
   }
 
   reloadYears(): void {
